@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ICLR 2027 Review Score Statistics</title>
+  <meta name="description" content="Distribution of ICLR 2027 review scores by primary area, from public OpenReview reviews. Updated during the rebuttal period.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="pill">ICLR 2027 · Rebuttal period</span>
+    <h1>Review Score Statistics by Area</h1>
+    <p class="asof">Data as of <strong id="asof">…</strong> · scraped from public OpenReview reviews</p>
+    <nav class="toc">
+      <a href="#lookup">Score lookup</a>
+      <a href="#overall">Overall</a>
+      <a href="#compare">Area comparison</a>
+      <a href="#mix">Rating mix</a>
+      <a href="#areas">Per-area histograms</a>
+      <a href="#intervals">Score intervals</a>
+      <a href="#history">Snapshot history</a>
+      <a href="#notes">Notes</a>
+    </nav>
+    <div class="tiles" id="tiles"></div>
+  </header>
+
+  <section id="lookup" class="lookup">
+    <h2>Where does a score rank?</h2>
+    <p class="sub">Enter a paper's average rating to see what share of papers in the area have the same or a higher average.</p>
+    <div class="card">
+      <form id="lookup-form" onsubmit="return false">
+        <label>Average rating (1–4)
+          <input id="lk-score" type="number" min="1" max="4" step="0.01" value="2.50" inputmode="decimal">
+        </label>
+        <label>Primary area
+          <select id="lk-area"></select>
+        </label>
+      </form>
+      <div class="result" id="lk-result" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="overall">
+    <h2>Overall distribution</h2>
+    <p class="sub">All active submissions with at least one review, across all primary areas.</p>
+    <div class="grid2">
+      <div class="card panel">
+        <h3>Average rating per paper</h3>
+        <div class="meta" id="overall-meta"></div>
+        <div class="chart" id="overall-hist"></div>
+      </div>
+      <div class="card panel">
+        <h3>Individual review ratings</h3>
+        <div class="meta" id="ratings-meta"></div>
+        <div class="chart" id="ratings-bar"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="compare">
+    <h2>Area comparison</h2>
+    <p class="sub">Share of each area's papers with an average rating ≥ the column value. Areas are sorted by mean average, high to low.</p>
+    <div class="legend">
+      <span><span class="sw" style="background: rgba(var(--pos), .45)"></span>Higher share than all areas (area scores higher)</span>
+      <span><span class="sw" style="background: rgba(var(--neg), .45)"></span>Lower share than all areas (area scores lower)</span>
+    </div>
+    <div class="card table-wrap"><table id="compare-table"></table></div>
+  </section>
+
+  <section id="mix">
+    <h2>Rating mix by area</h2>
+    <p class="sub">Composition of individual review ratings within each area.</p>
+    <div class="legend" id="mix-legend"></div>
+    <div class="card"><div class="mix" id="mix-chart"></div></div>
+  </section>
+
+  <section id="areas">
+    <h2>Average-rating histogram by area</h2>
+    <p class="sub">Share of the area's papers in each 0.25-wide interval of the average rating. Every panel uses the same y-axis, so panels can be compared directly. “Top x%” = share of papers with average ≥ 2.5 / ≥ 3.0.</p>
+    <div class="grid3" id="area-grid"></div>
+  </section>
+
+  <section id="intervals">
+    <div class="row-between">
+      <div>
+        <h2>Score intervals</h2>
+        <p class="sub">Number of papers in each average-rating interval, by area. Intervals include the lower bound but not the upper bound, except the last one, which includes 4.</p>
+      </div>
+      <div class="toggle" role="group" aria-label="Units">
+        <button type="button" id="unit-pct" class="on">Percent</button>
+        <button type="button" id="unit-cnt">Count</button>
+      </div>
+    </div>
+    <div class="card table-wrap"><table id="interval-table"></table></div>
+  </section>
+
+  <section id="history">
+    <h2>Snapshot history</h2>
+    <p class="sub">One row per data refresh, so you can see scores move during the rebuttal. Withdrawn papers are excluded from every statistic except the count in the Withdrawn column.</p>
+    <div class="card table-wrap"><table id="history-table"></table></div>
+  </section>
+
+  <section id="notes">
+    <h2>Notes</h2>
+    <div class="card">
+      <ul class="notes" id="notes-list">
+        <li><b>Rating scale.</b> ICLR 2027 uses a 4-point overall rating with no borderline option: 1 = clear reject, 2 = leaning reject, 3 = leaning accept, 4 = clear accept.</li>
+        <li><b>Paper average.</b> The unweighted mean of a paper's current overall ratings. Confidence is not used for weighting.</li>
+        <li><b>Which papers count.</b> Active submissions with at least one public official review. Withdrawn and desk-rejected papers are excluded. Papers that withdraw after seeing their reviews tend to score low, so averages may drift upward over time as they leave the pool.</li>
+        <li><b>Areas.</b> The primary area the authors picked at submission (21 areas).</li>
+        <li><b>ICLR 2026 accept rate.</b> Accepted ÷ (accepted + rejected) for the same primary area at ICLR 2026, computed from OpenReview decisions. It is for reference only and excludes withdrawn and desk-rejected papers.</li>
+        <li><b>Scores are not final.</b> Reviewers can raise or lower their ratings during the discussion period, which ends Nov 18, 2026, and the AC discussion that follows. Final decisions are due Dec 16, 2026.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Unofficial; not affiliated with ICLR or OpenReview. Data from the public OpenReview API.
+    <span id="footer-asof"></span>
+  </footer>
+</div>
+<div id="tooltip" role="status"></div>
+<script src="assets/app.js"></script>
+</body>
+</html>
