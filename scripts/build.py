@@ -41,7 +41,9 @@ AREA_SHORT = {
 }
 
 # Score intervals for histograms / tables: [lo, hi), last bin closed at 4.
-BIN_EDGES = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0]
+# One-third-wide so every interval starts at a 3-review average (≈90% of papers have
+# 3 reviews); 0.25-wide bins produce an artificial saw-tooth.
+BIN_EDGES = [1.0, 1.33, 1.67, 2.0, 2.33, 2.67, 3.0, 3.33, 3.67, 4.0]
 # "Share of papers with average >= t". 2.33 / 2.67 are the 3-review averages 7/3 and 8/3.
 THRESHOLDS = [2.0, 2.33, 2.5, 2.67, 3.0]
 SUB_SCORES = ["confidence", "soundness", "presentation", "informativeness"]

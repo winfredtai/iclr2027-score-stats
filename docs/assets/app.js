@@ -113,20 +113,19 @@
       el("p", { class: "muted", text: `${fmtInt(a.count)} of ${fmtInt(g.n_reviewed)} reviewed papers have an average ≥ ${xs}.` }),
     ];
     if (g.key !== "all") kids.push(el("p", { class: "muted", text: `Across all areas: top ${pct(all.share)} (${fmtInt(all.count)} of ${fmtInt(allGroup().n_reviewed)}).` }));
-    if (g.ref_2026_accept_rate != null) kids.push(el("p", { class: "muted", text: `For reference, ICLR 2026 accepted ${pct(g.ref_2026_accept_rate, 0)} of decided papers in this area.` }));
+    if (g.ref_2026_accept_rate != null) kids.push(el("p", { class: "muted", text: `For reference, ICLR 2026 accepted ${pct(g.ref_2026_accept_rate, 0)} of its non-desk-rejected submissions${g.key === "all" ? "" : " in this area"}.` }));
     out.replaceChildren(...kids);
   }
 
   // ---------- Histogram (single series) ----------
   let sharedYMax = 0.3;
   function niceMax(v) {
-    const step = v > 0.2 ? 0.1 : 0.05;
-    return Math.max(step, Math.ceil((v + 0.005) / step) * step);
+    return Math.max(0.05, Math.ceil((v + 0.005) / 0.05) * 0.05);
   }
   function drawHist(container, g, opts) {
     const W = Math.max(260, container.clientWidth || 340);
     const H = opts.height || 170;
-    const m = { l: 34, r: 6, t: 22, b: 22 };
+    const m = { l: 34, r: 6, t: opts.marks ? 22 : 8, b: 22 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const nb = g.hist.length, slot = iw / nb;
     const bw = Math.min(24, slot - 2);
@@ -135,7 +134,7 @@
     const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Histogram of average rating for ${g.name}` });
 
     const step = yMax > 0.2 ? 0.1 : 0.05;
-    for (let v = 0; v <= yMax + 1e-9; v += step) {
+    for (let v = 0; v <= yMax + 1e-9; v = Math.round((v + step) * 100) / 100) {
       const yy = y(v);
       if (v > 0) s.append(svg("line", { x1: m.l, x2: W - m.r, y1: yy, y2: yy, class: "gridline" }));
       s.append(svgText(m.l - 6, yy + 3.5, Math.round(v * 100) + "%", { "text-anchor": "end", class: "tick" }));
@@ -156,21 +155,22 @@
       attachTip(hit, () => [["v", `${pct(share)} of papers`], ["", `Average ${binLabel(i)}`], ["k", `${fmtInt(c)} papers · ${pct(cum)} have average ≥ ${S.bin_edges[i].toFixed(2)}`]], p);
     });
 
-    // x labels at interval edges (every 0.5)
+    // x labels at every interval edge; integers emphasized.
     S.bin_edges.forEach((e, i) => {
-      if (Math.abs(e * 2 - Math.round(e * 2)) > 1e-9) return;
-      s.append(svgText(m.l + slot * i, H - 6, String(e), { "text-anchor": "middle", class: "xlbl tick" }));
+      const isInt = Math.abs(e - Math.round(e)) < 1e-9;
+      s.append(svgText(m.l + slot * i, H - 6, isInt ? String(e) : e.toFixed(2), { "text-anchor": "middle", class: isInt ? "xlbl tick" : "tick" }));
     });
 
     // Selective direct labels: "Top x%" above the 2.5 and 3.0 interval columns.
-    (opts.marks || []).forEach((t) => {
+    // Only drawn where the interval is wide enough to hold the label without colliding.
+    if (slot >= 56) (opts.marks || []).forEach((t) => {
       const i = S.bin_edges.findIndex((e) => Math.abs(e - t) < 1e-9);
       if (i < 0) return;
       const share = g.share_ge[t.toFixed(2)];
       const h = (g.hist[i] / n / yMax) * ih;
       const cx = m.l + slot * i + slot / 2;
       const yy = m.t + ih - h - 6;
-      s.append(svgText(cx - bw / 2, Math.max(10, yy), `Top ${pctSmart(share)}`, { "text-anchor": "start", class: "lbl" }));
+      s.append(svgText(cx, Math.max(10, yy), `Top ${pctSmart(share)}`, { "text-anchor": "middle", class: "lbl" }));
     });
     container.replaceChildren(s);
   }
@@ -284,10 +284,12 @@
       const card = el("div", { class: "card panel" });
       const h = el("h3"); h.textContent = g.name;
       const full = el("div", { class: "full" }); full.textContent = g.key === "all" ? "All primary areas combined" : g.full;
+      full.title = full.textContent;
       const meta = el("div", { class: "meta" });
-      meta.append(document.createTextNode(`n = ${fmtInt(g.n_reviewed)} · mean `), el("b", { text: f2(g.mean) }),
-        document.createTextNode(` · median ${f2(g.median)}`));
-      if (g.ref_2026_accept_rate != null) meta.append(document.createTextNode(` · ICLR 2026 acc. ${pct(g.ref_2026_accept_rate, 0)}`));
+      const item = (label, val) => el("span", { class: "item" }, document.createTextNode(label), el("b", { text: val }));
+      meta.append(el("div", null, item("n = ", fmtInt(g.n_reviewed)), item(" · mean ", f2(g.mean)), item(" · median ", f2(g.median))));
+      meta.append(el("div", null, item("≥ 2.33: ", pctSmart(g.share_ge["2.33"])), item(" · ≥ 2.67: ", pctSmart(g.share_ge["2.67"])), item(" · ≥ 3.00: ", pctSmart(g.share_ge["3.00"]))));
+      if (g.ref_2026_accept_rate != null) meta.append(el("div", null, item("ICLR 2026 accept rate: ", pct(g.ref_2026_accept_rate, 0))));
       const chart = el("div", { class: "chart" });
       card.append(h, full, meta, chart);
       card._g = g; card._chart = chart;
@@ -296,7 +298,7 @@
     drawAreaCharts();
   }
   function drawAreaCharts() {
-    document.querySelectorAll("#area-grid .panel").forEach((card) => drawHist(card._chart, card._g, { yMax: sharedYMax, height: 170, marks: [2.5, 3.0] }));
+    document.querySelectorAll("#area-grid .panel").forEach((card) => drawHist(card._chart, card._g, { yMax: sharedYMax, height: 170 }));
   }
 
   // ---------- Interval table ----------
@@ -342,7 +344,7 @@
 
   // ---------- Main ----------
   function drawResponsive() {
-    drawHist(document.getElementById("overall-hist"), allGroup(), { yMax: niceMax(Math.max(...allGroup().hist) / allGroup().n_reviewed), height: 220, marks: [2.0, 2.5, 3.0] });
+    drawHist(document.getElementById("overall-hist"), allGroup(), { yMax: niceMax(Math.max(...allGroup().hist) / allGroup().n_reviewed), height: 220, marks: [2.0, 2.33, 2.67, 3.0] });
     drawRatings(document.getElementById("ratings-bar"), allGroup());
     drawAreaCharts();
     labelMixSegments();

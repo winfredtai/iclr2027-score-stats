@@ -78,7 +78,7 @@
 
   <section id="areas">
     <h2>Average-rating histogram by area</h2>
-    <p class="sub">Share of the area's papers in each 0.25-wide interval of the average rating. Every panel uses the same y-axis, so panels can be compared directly. “Top x%” = share of papers with average ≥ 2.5 / ≥ 3.0.</p>
+    <p class="sub">Share of the area's papers in each interval of the average rating. Intervals are one-third wide and start at the possible 3-review averages (2.00, 2.33, 2.67, …). Every panel uses the same y-axis, so panels can be compared directly. “Top shares” = share of papers with an average ≥ that value.</p>
     <div class="grid3" id="area-grid"></div>
   </section>
 
@@ -107,10 +107,10 @@
     <div class="card">
       <ul class="notes" id="notes-list">
         <li><b>Rating scale.</b> ICLR 2027 uses a 4-point overall rating with no borderline option: 1 = clear reject, 2 = leaning reject, 3 = leaning accept, 4 = clear accept.</li>
-        <li><b>Paper average.</b> The unweighted mean of a paper's current overall ratings. Confidence is not used for weighting.</li>
+        <li><b>Paper average.</b> The unweighted mean of a paper's current overall ratings. Confidence is not used for weighting. About 90% of papers have exactly 3 reviews, so most averages fall on thirds (2.00, 2.33, 2.67, …). The histogram intervals start on those values.</li>
         <li><b>Which papers count.</b> Active submissions with at least one public official review. Withdrawn and desk-rejected papers are excluded. Papers that withdraw after seeing their reviews tend to score low, so averages may drift upward over time as they leave the pool.</li>
         <li><b>Areas.</b> The primary area the authors picked at submission (21 areas).</li>
-        <li><b>ICLR 2026 accept rate.</b> Accepted ÷ (accepted + rejected) for the same primary area at ICLR 2026, computed from OpenReview decisions. It is for reference only and excludes withdrawn and desk-rejected papers.</li>
+        <li><b>ICLR 2026 accept rate.</b> Accepted ÷ (accepted + rejected + withdrawn) for the same primary area at ICLR 2026, from OpenReview decisions, with desk-rejected papers excluded. That came to 28% overall; counting only papers that received a decision, it was 39%. It is for reference only. Some papers in the current pool will still withdraw, so the eventual acceptance rate among today's active papers will fall between these two figures.</li>
         <li><b>Scores are not final.</b> Reviewers can raise or lower their ratings during the discussion period, which ends Nov 18, 2026, and the AC discussion that follows. Final decisions are due Dec 16, 2026.</li>
       </ul>
     </div>

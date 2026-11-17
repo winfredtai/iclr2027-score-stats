@@ -1,0 +1,182 @@
+{
+ "venue": "ICLR 2026",
+ "definition": "accept_rate = accepted / (accepted + rejected + withdrawn), desk rejects excluded; accept_rate_decided = accepted / (accepted + rejected)",
+ "overall": {
+  "accept_rate": 0.283,
+  "accept_rate_decided": 0.3907,
+  "rejected": 8345,
+  "accepted": 5351,
+  "withdrawn": 5210,
+  "desk_rejected": 908
+ },
+ "areas": {
+  "probabilistic methods (Bayesian methods, variational inference, sampling, UQ, etc.)": {
+   "accept_rate": 0.3251,
+   "accept_rate_decided": 0.3844,
+   "rejected": 189,
+   "accepted": 118,
+   "withdrawn": 56,
+   "desk_rejected": 19
+  },
+  "transfer learning, meta learning, and lifelong learning": {
+   "accept_rate": 0.2201,
+   "accept_rate_decided": 0.3155,
+   "rejected": 256,
+   "withdrawn": 162,
+   "accepted": 118,
+   "desk_rejected": 35
+  },
+  "foundation or frontier models, including LLMs": {
+   "accept_rate": 0.3323,
+   "accept_rate_decided": 0.4419,
+   "accepted": 845,
+   "rejected": 1067,
+   "withdrawn": 631,
+   "desk_rejected": 117
+  },
+  "datasets and benchmarks": {
+   "accept_rate": 0.2936,
+   "accept_rate_decided": 0.4142,
+   "accepted": 439,
+   "withdrawn": 435,
+   "rejected": 621,
+   "desk_rejected": 96
+  },
+  "alignment, fairness, safety, privacy, and societal considerations": {
+   "accept_rate": 0.2629,
+   "accept_rate_decided": 0.3669,
+   "rejected": 730,
+   "withdrawn": 456,
+   "accepted": 423,
+   "desk_rejected": 88
+  },
+  "generative models": {
+   "accept_rate": 0.3105,
+   "accept_rate_decided": 0.4349,
+   "accepted": 498,
+   "withdrawn": 459,
+   "rejected": 647,
+   "desk_rejected": 78
+  },
+  "applications to physical sciences (physics, chemistry, biology, etc.)": {
+   "accept_rate": 0.2673,
+   "accept_rate_decided": 0.3716,
+   "withdrawn": 231,
+   "accepted": 220,
+   "rejected": 372,
+   "desk_rejected": 37
+  },
+  "applications to computer vision, audio, language, and other modalities": {
+   "accept_rate": 0.2799,
+   "accept_rate_decided": 0.4363,
+   "accepted": 733,
+   "rejected": 947,
+   "withdrawn": 939,
+   "desk_rejected": 89
+  },
+  "reinforcement learning": {
+   "accept_rate": 0.3013,
+   "accept_rate_decided": 0.3866,
+   "rejected": 487,
+   "accepted": 307,
+   "withdrawn": 225,
+   "desk_rejected": 45
+  },
+  "applications to neuroscience & cognitive science": {
+   "accept_rate": 0.3128,
+   "accept_rate_decided": 0.4043,
+   "rejected": 165,
+   "accepted": 112,
+   "withdrawn": 81,
+   "desk_rejected": 23
+  },
+  "applications to robotics, autonomy, planning": {
+   "accept_rate": 0.3074,
+   "accept_rate_decided": 0.4248,
+   "accepted": 178,
+   "withdrawn": 160,
+   "rejected": 241,
+   "desk_rejected": 19
+  },
+  "other topics in machine learning (i.e., none of the above)": {
+   "accept_rate": 0.2124,
+   "accept_rate_decided": 0.3073,
+   "withdrawn": 240,
+   "accepted": 165,
+   "rejected": 372,
+   "desk_rejected": 36
+  },
+  "learning on graphs and other geometries & topologies": {
+   "accept_rate": 0.226,
+   "accept_rate_decided": 0.3079,
+   "accepted": 113,
+   "rejected": 254,
+   "withdrawn": 133,
+   "desk_rejected": 34
+  },
+  "unsupervised, self-supervised, semi-supervised, and supervised representation learning": {
+   "accept_rate": 0.2395,
+   "accept_rate_decided": 0.3309,
+   "withdrawn": 309,
+   "accepted": 268,
+   "rejected": 542,
+   "desk_rejected": 47
+  },
+  "learning on time series and dynamical systems": {
+   "accept_rate": 0.2252,
+   "accept_rate_decided": 0.3049,
+   "rejected": 228,
+   "withdrawn": 116,
+   "accepted": 100,
+   "desk_rejected": 22
+  },
+  "interpretability and explainable AI": {
+   "accept_rate": 0.2663,
+   "accept_rate_decided": 0.3597,
+   "rejected": 356,
+   "accepted": 200,
+   "withdrawn": 195,
+   "desk_rejected": 38
+  },
+  "optimization": {
+   "accept_rate": 0.2679,
+   "accept_rate_decided": 0.3466,
+   "withdrawn": 162,
+   "accepted": 191,
+   "rejected": 360,
+   "desk_rejected": 27
+  },
+  "causal reasoning": {
+   "accept_rate": 0.2459,
+   "accept_rate_decided": 0.3237,
+   "withdrawn": 44,
+   "rejected": 94,
+   "accepted": 45,
+   "desk_rejected": 10
+  },
+  "learning theory": {
+   "accept_rate": 0.3829,
+   "accept_rate_decided": 0.4653,
+   "rejected": 216,
+   "accepted": 188,
+   "desk_rejected": 24,
+   "withdrawn": 87
+  },
+  "infrastructure, software libraries, hardware, systems, etc.": {
+   "accept_rate": 0.2588,
+   "accept_rate_decided": 0.3284,
+   "desk_rejected": 9,
+   "withdrawn": 36,
+   "accepted": 44,
+   "rejected": 90
+  },
+  "neurosymbolic & hybrid AI systems (physics-informed, logic & formal reasoning, etc.)": {
+   "accept_rate": 0.219,
+   "accept_rate_decided": 0.293,
+   "withdrawn": 53,
+   "desk_rejected": 15,
+   "rejected": 111,
+   "accepted": 46
+  }
+ }
+}

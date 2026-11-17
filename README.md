@@ -10,7 +10,7 @@ A static site showing how ICLR 2027 review scores are distributed overall and wi
 - **Overall distribution:** a histogram of per-paper average ratings and the mix of individual 1–4 ratings.
 - **Area comparison table:** share of papers with an average ≥ 2.00 / 2.33 / 2.50 / 2.67 / 3.00, shaded against all areas, plus the ICLR 2026 acceptance rate for each area.
 - **Rating mix by area:** stacked bars showing each area's split of ratings 1–4.
-- **Per-area histograms:** 0.25-wide intervals on a shared y-axis.
+- **Per-area histograms:** one-third-wide intervals (2.00–2.32, 2.33–2.66, …) on a shared y-axis.
 - **Score-interval table:** percent or counts for every interval and area.
 - **Snapshot history:** one row per refresh, to follow score changes through the rebuttal.
 
@@ -58,6 +58,6 @@ Anonymous OpenReview API requests for notes now get a "challenge" 403, which is 
 - **Paper average:** the unweighted mean of a paper's current overall ratings, on a 1–4 scale.
 - **Population:** active submissions with at least one review. Withdrawn and desk-rejected papers are excluded.
 - **Primary area:** the area the authors chose at submission.
-- **ICLR 2026 acceptance rate:** accepted ÷ (accepted + rejected), from OpenReview decisions.
+- **ICLR 2026 acceptance rate:** accepted ÷ (accepted + rejected + withdrawn), with desk rejects excluded. That was 28% overall. Counting only papers that received a decision, it was 39%.
 
 Unofficial; not affiliated with ICLR or OpenReview.

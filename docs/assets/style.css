@@ -95,10 +95,10 @@ section { margin-top: 34px; }
 .lookup .result p { margin: 4px 0; }
 
 /* Two-up layout */
-.grid2 { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
-.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-@media (max-width: 980px) { .grid3 { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 760px) { .grid2, .grid3 { grid-template-columns: 1fr; } h1 { font-size: 25px; } }
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 980px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 25px; } }
 
 .chart { width: 100%; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -113,7 +113,8 @@ section { margin-top: 34px; }
 .chart .hit { fill: transparent; cursor: default; }
 .panel .meta { color: var(--text-secondary); font-size: 12.5px; margin: 2px 0 8px; }
 .panel .meta b { color: var(--text-primary); font-weight: 600; }
-.panel .full { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+.panel .meta .item { white-space: nowrap; }
+.panel .full { color: var(--text-muted); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #area-grid .panel { display: flex; flex-direction: column; }
 #area-grid .panel .chart { margin-top: auto; }
 

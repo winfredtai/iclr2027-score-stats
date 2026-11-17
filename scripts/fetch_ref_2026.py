@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """One-off: ICLR 2026 acceptance rate per primary area, as a reference column.
 
-accept rate = accepted / (accepted + rejected), i.e. among papers that received a
-decision (withdrawn and desk-rejected papers are excluded).
+accept_rate         = accepted / (accepted + rejected + withdrawn): share of submissions
+                      that were not desk-rejected (closest analogue of the reviewed pool).
+accept_rate_decided = accepted / (accepted + rejected).
 Writes docs/data/ref_iclr2026.json. Only needs re-running if you want to refresh it.
 """
 import json
@@ -46,11 +47,16 @@ def main():
 
     def rate(c):
         decided = c["accepted"] + c["rejected"]
-        return {"accept_rate": round(c["accepted"] / decided, 4) if decided else None, **c}
+        reviewed = decided + c["withdrawn"]
+        return {
+            "accept_rate": round(c["accepted"] / reviewed, 4) if reviewed else None,
+            "accept_rate_decided": round(c["accepted"] / decided, 4) if decided else None,
+            **c,
+        }
 
     out = {
         "venue": "ICLR 2026",
-        "definition": "accepted / (accepted + rejected); withdrawn and desk-rejected excluded",
+        "definition": "accept_rate = accepted / (accepted + rejected + withdrawn), desk rejects excluded; accept_rate_decided = accepted / (accepted + rejected)",
         "overall": rate(counts.pop("__all__")),
         "areas": {a: rate(c) for a, c in counts.items()},
     }
