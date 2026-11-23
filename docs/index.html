@@ -20,6 +20,7 @@
       <a href="#mix">Rating mix</a>
       <a href="#areas">Per-area histograms</a>
       <a href="#intervals">Score intervals</a>
+      <a href="#top-papers">High-scoring papers</a>
       <a href="#history">Snapshot history</a>
       <a href="#notes">Notes</a>
     </nav>
@@ -96,6 +97,34 @@
     <div class="card table-wrap"><table id="interval-table"></table></div>
   </section>
 
+  <section id="top-papers" class="lookup">
+    <h2>High-scoring papers</h2>
+    <p class="sub">Every active submission whose average rating meets the cut-off. Click a title to open its OpenReview page. The list is saved with each data refresh, and the <em>Change</em> column shows movement since the previous refresh.</p>
+    <div class="card">
+      <form id="tp-form" onsubmit="return false">
+        <label>Minimum average
+          <select id="tp-min">
+            <option value="3.00">≥ 3.00</option>
+            <option value="3.33" selected>≥ 3.33</option>
+            <option value="3.50">≥ 3.50</option>
+            <option value="3.67">≥ 3.67</option>
+            <option value="4.00">= 4.00</option>
+          </select>
+        </label>
+        <label>Primary area
+          <select id="tp-area"><option value="-1">All areas</option></select>
+        </label>
+        <label>Search titles
+          <input id="tp-q" type="search" placeholder="e.g. diffusion" class="wide">
+        </label>
+        <button type="button" id="tp-csv" class="btn">Download CSV</button>
+      </form>
+      <p class="tp-count" id="tp-count" aria-live="polite">Loading…</p>
+      <div class="table-wrap"><table id="tp-table" class="papers"></table></div>
+      <div class="tp-more"><button type="button" id="tp-more" class="btn" hidden>Show more</button></div>
+    </div>
+  </section>
+
   <section id="history">
     <h2>Snapshot history</h2>
     <p class="sub">One row per data refresh, so you can see scores move during the rebuttal. Withdrawn papers are excluded from every statistic except the count in the Withdrawn column.</p>
@@ -109,6 +138,7 @@
         <li><b>Rating scale.</b> ICLR 2027 uses a 4-point overall rating with no borderline option: 1 = clear reject, 2 = leaning reject, 3 = leaning accept, 4 = clear accept.</li>
         <li><b>Paper average.</b> The unweighted mean of a paper's current overall ratings. Confidence is not used for weighting. About 90% of papers have exactly 3 reviews, so most averages fall on thirds (2.00, 2.33, 2.67, …). The histogram intervals start on those values.</li>
         <li><b>Which papers count.</b> Active submissions with at least one public official review. Withdrawn and desk-rejected papers are excluded. Papers that withdraw after seeing their reviews tend to score low, so averages may drift upward over time as they leave the pool.</li>
+        <li><b>High-scoring papers.</b> Each refresh saves the list of active submissions with an average of 3.00 or higher, with titles linked to OpenReview. <em>New</em> means the paper was below 3.00 at the previous refresh. ▲ / ▼ means its average changed since then. Papers that drop below 3.00 or are withdrawn leave the list.</li>
         <li><b>Areas.</b> The primary area the authors picked at submission (21 areas).</li>
         <li><b>ICLR 2026 accept rate.</b> Accepted ÷ (accepted + rejected + withdrawn) for the same primary area at ICLR 2026, from OpenReview decisions, with desk-rejected papers excluded. That came to 28% overall; counting only papers that received a decision, it was 39%. It is for reference only. Some papers in the current pool will still withdraw, so the eventual acceptance rate among today's active papers will fall between these two figures.</li>
         <li><b>Scores are not final.</b> Reviewers can raise or lower their ratings during the discussion period, which ends Nov 18, 2026, and the AC discussion that follows. Final decisions are due Dec 16, 2026.</li>

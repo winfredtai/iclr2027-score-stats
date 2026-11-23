@@ -28,7 +28,7 @@ SCORE_FIELDS = ["rating", "confidence", "soundness", "presentation", "informativ
 SELECT = ",".join(
     ["id", "forum", "number", "invitations", "tcdate", "tmdate"]
     + [f"content.{f}" for f in SCORE_FIELDS]
-    + ["content.primary_area", "content.venueid"]
+    + ["content.title", "content.primary_area", "content.venueid"]
 )
 
 
@@ -99,6 +99,7 @@ def main():
                 papers[n["id"]] = {
                     "id": n["id"],
                     "number": n.get("number"),
+                    "title": cval(n, "title"),
                     "area": cval(n, "primary_area"),
                     "venueid": cval(n, "venueid"),
                 }

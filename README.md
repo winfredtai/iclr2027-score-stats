@@ -12,6 +12,7 @@ A static site showing how ICLR 2027 review scores are distributed overall and wi
 - **Rating mix by area:** stacked bars showing each area's split of ratings 1–4.
 - **Per-area histograms:** one-third-wide intervals (2.00–2.32, 2.33–2.66, …) on a shared y-axis.
 - **Score-interval table:** percent or counts for every interval and area.
+- **High-scoring papers:** a list of every active paper with an average ≥ 3.00, saved with each refresh. You can filter it by cut-off (3.00 / 3.33 / 3.50 / 3.67 / 4.00), area, and title search. Titles link to OpenReview, the list can be downloaded as CSV, and it shows changes since the previous refresh.
 - **Snapshot history:** one row per refresh, to follow score changes through the rebuttal.
 
 ## How to refresh the data
@@ -46,7 +47,7 @@ Everything uses only the Python standard library (3.9+), so there is nothing to 
 | Step | File | What it does |
 |---|---|---|
 | Fetch | `scripts/fetch.py` | Logs in to the OpenReview API v2 and pages through `ICLR.cc/2027/Conference/-/Edit`, using `select` so that only score fields come back, with no review text. That is about 169k notes and roughly 70 MB in total. It writes `data/raw/latest.json`, which is git-ignored. |
-| Build | `scripts/build.py` | Computes per-area statistics, writes `docs/data/stats.json`, and appends a summary row to `docs/data/history.json`. |
+| Build | `scripts/build.py` | Computes per-area statistics, writes `docs/data/stats.json` and `docs/data/top_papers.json`, and appends a summary row to `docs/data/history.json`. |
 | Reference | `scripts/fetch_ref_2026.py` | One-off script that computes the ICLR 2026 acceptance rate per primary area and writes `docs/data/ref_iclr2026.json`. |
 | Site | `docs/` | Plain HTML, CSS and JS with no build step. Charts are drawn as SVG from the JSON files. |
 | CI | `.github/workflows/update.yml` | Manual `workflow_dispatch` refresh, plus a Pages deploy on every push to `docs/`. |

@@ -168,3 +168,37 @@ th .thr { font-variant-numeric: tabular-nums; }
 .notes li b { color: var(--text-primary); }
 footer { margin-top: 40px; color: var(--text-muted); font-size: 13px; }
 .error { color: var(--r1); }
+
+/* High-scoring papers */
+:root { --delta-up: #006300; --delta-down: #b42e2e; }
+@media (prefers-color-scheme: dark) { :root { --delta-up: #0ca30c; --delta-down: #e66767; } }
+.lookup input.wide { width: 220px; }
+.btn {
+  font: inherit; font-size: 13px; color: var(--pill-text); background: var(--pill-bg);
+  border: 1px solid transparent; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+}
+.btn:hover { filter: brightness(0.97); }
+.tp-count { margin: 14px 0 8px; color: var(--text-secondary); font-size: 14px; }
+.tp-count b { color: var(--text-primary); }
+.tp-more { text-align: center; margin-top: 12px; }
+table.papers td { white-space: normal; vertical-align: baseline; }
+table.papers td.title { text-align: left; min-width: 320px; }
+table.papers td.title a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
+table.papers td.title a:hover { color: var(--series-1); text-decoration: underline; }
+table.papers td.title .num { color: var(--text-muted); font-size: 12px; margin-left: 6px; white-space: nowrap; }
+table.papers td.area { text-align: left; color: var(--text-secondary); font-size: 12.5px; min-width: 150px; }
+table.papers th.l { text-align: left; }
+table.papers td.rank { color: var(--text-muted); }
+table.papers td.ratings { white-space: nowrap; }
+.chip {
+  display: inline-block; min-width: 20px; padding: 1px 0; margin-left: 3px; border-radius: 4px;
+  text-align: center; font-size: 12px; font-weight: 600;
+}
+.chip.r1 { background: var(--r1); color: var(--r1-ink); }
+.chip.r2 { background: var(--r2); color: var(--r2-ink); }
+.chip.r3 { background: var(--r3); color: var(--r3-ink); }
+.chip.r4 { background: var(--r4); color: var(--r4-ink); }
+.delta { font-size: 12.5px; white-space: nowrap; }
+.delta.up { color: var(--delta-up); }
+.delta.down { color: var(--delta-down); }
+.delta.new { color: var(--pill-text); background: var(--pill-bg); border-radius: 999px; padding: 1px 8px; font-weight: 600; }

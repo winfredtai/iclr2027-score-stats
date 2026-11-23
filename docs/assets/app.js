@@ -342,6 +342,104 @@
     document.getElementById("history-table").replaceChildren(el("thead", null, head), el("tbody", null, ...rows));
   }
 
+  // ---------- High-scoring papers ----------
+  const TP_PAGE = 100;
+  let TP = null, tpShown = TP_PAGE, tpRows = [];
+  const forumUrl = (id) => "https://openreview.net/forum?id=" + encodeURIComponent(id);
+
+  function tpFiltered() {
+    const min = parseFloat(document.getElementById("tp-min").value);
+    const area = parseInt(document.getElementById("tp-area").value, 10);
+    const q = document.getElementById("tp-q").value.trim().toLowerCase();
+    return TP.papers.filter((p) => p.avg >= min - 1e-9 && (area < 0 || p.a === area) && (!q || p.t.toLowerCase().includes(q)));
+  }
+  function deltaCell(p) {
+    const td = el("td");
+    if (p.new) {
+      const b = el("span", { class: "delta new", text: "New" });
+      b.title = `Average was below ${TP.min_avg.toFixed(2)} at the previous refresh (${TP.previous_as_of_et})`;
+      td.append(b);
+    } else if (p.prev != null) {
+      const up = p.avg > p.prev;
+      const d = el("span", { class: "delta " + (up ? "up" : "down"), text: `${up ? "▲" : "▼"} from ${p.prev.toFixed(2)}` });
+      d.title = `Average was ${p.prev.toFixed(2)} at the previous refresh (${TP.previous_as_of_et})`;
+      td.append(d);
+    } else {
+      td.append(el("span", { class: "muted", text: TP.compared_to_previous ? "–" : "" }));
+    }
+    return td;
+  }
+  function renderTopPapers(resetPaging) {
+    if (!TP) return;
+    if (resetPaging) tpShown = TP_PAGE;
+    tpRows = tpFiltered();
+    const min = document.getElementById("tp-min").value;
+    const areaSel = document.getElementById("tp-area");
+    const areaName = areaSel.value === "-1" ? "all areas" : areaSel.options[areaSel.selectedIndex].text;
+    const count = document.getElementById("tp-count");
+    count.replaceChildren(el("b", { text: fmtInt(tpRows.length) }),
+      document.createTextNode(` papers with average ${min === "4.00" ? "= 4.00" : "≥ " + min} in ${areaName}`),
+      document.createTextNode(TP.compared_to_previous ? ` · change vs. ${TP.previous_as_of_et}` : ""));
+
+    const head = el("tr", null, el("th", { text: "#" }), el("th", { class: "l", text: "Title" }), el("th", { class: "l", text: "Area" }),
+      el("th", { text: "Ratings" }), el("th", { text: "Avg" }), TP.compared_to_previous ? el("th", { text: "Change" }) : null);
+    const body = el("tbody");
+    tpRows.slice(0, tpShown).forEach((p, i) => {
+      const a = el("a", { href: forumUrl(p.id), target: "_blank", rel: "noopener", text: p.t });
+      const title = el("td", { class: "title" }, a, el("span", { class: "num", text: "#" + p.n }));
+      const ratings = el("td", { class: "ratings" }, ...p.r.map((r) => el("span", { class: "chip r" + r, text: String(r) })));
+      ratings.setAttribute("aria-label", "Ratings " + p.r.join(", "));
+      body.append(el("tr", null, el("td", { class: "rank", text: String(i + 1) }), title,
+        el("td", { class: "area", text: TP.areas[p.a] }), ratings, el("td", { text: p.avg.toFixed(2) }), TP.compared_to_previous ? deltaCell(p) : null));
+    });
+    document.getElementById("tp-table").replaceChildren(el("thead", null, head), body);
+    const more = document.getElementById("tp-more");
+    const left = tpRows.length - tpShown;
+    more.hidden = left <= 0;
+    more.textContent = `Show ${Math.min(TP_PAGE, left)} more (${fmtInt(left)} remaining)`;
+  }
+  function downloadTopCsv() {
+    if (!TP) return;
+    const esc = (v) => { const t = String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+    const lines = [["submission_number", "title", "primary_area", "ratings", "average", "previous_average", "openreview_url"].join(",")];
+    tpRows.forEach((p) => lines.push([p.n, p.t, TP.areas[p.a], p.r.join(" "), p.avg.toFixed(2), p.prev != null ? p.prev.toFixed(2) : (p.new ? "<" + TP.min_avg.toFixed(2) : ""), forumUrl(p.id)].map(esc).join(",")));
+    const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv;charset=utf-8" });
+    const a = el("a", { href: URL.createObjectURL(blob), download: `iclr2027_avg_ge_${document.getElementById("tp-min").value}.csv` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function initTopPapers() {
+    const section = document.getElementById("top-papers");
+    let started = false;
+    const load = () => {
+      if (started) return;
+      started = true;
+      fetch("data/top_papers.json", { cache: "no-cache" }).then((r) => {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }).then((d) => {
+        TP = d;
+        const sel = document.getElementById("tp-area");
+        TP.areas.map((name, i) => [name, i]).sort((x, y) => x[0].localeCompare(y[0]))
+          .forEach(([name, i]) => sel.append(el("option", { value: String(i), text: name })));
+        ["tp-min", "tp-area"].forEach((id) => document.getElementById(id).addEventListener("change", () => renderTopPapers(true)));
+        document.getElementById("tp-q").addEventListener("input", () => renderTopPapers(true));
+        document.getElementById("tp-more").addEventListener("click", () => { tpShown += TP_PAGE; renderTopPapers(false); });
+        document.getElementById("tp-csv").addEventListener("click", downloadTopCsv);
+        renderTopPapers(true);
+      }).catch(() => {
+        document.getElementById("tp-count").textContent = "The paper list is not available for this snapshot yet.";
+      });
+    };
+    // The list is ~1 MB, so only download it when the section is about to be seen.
+    if ("IntersectionObserver" in window && location.hash !== "#top-papers") {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: "800px" });
+      io.observe(section);
+    } else {
+      load();
+    }
+  }
+
   // ---------- Main ----------
   function drawResponsive() {
     drawHist(document.getElementById("overall-hist"), allGroup(), { yMax: niceMax(Math.max(...allGroup().hist) / allGroup().n_reviewed), height: 220, marks: [2.0, 2.33, 2.67, 3.0] });
@@ -377,6 +475,7 @@
     renderIntervals();
     bindUnitToggle();
     renderHistory();
+    initTopPapers();
     drawResponsive();
     let t;
     window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(drawResponsive, 120); });

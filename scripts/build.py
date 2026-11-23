@@ -47,6 +47,9 @@ BIN_EDGES = [1.0, 1.33, 1.67, 2.0, 2.33, 2.67, 3.0, 3.33, 3.67, 4.0]
 # "Share of papers with average >= t". 2.33 / 2.67 are the 3-review averages 7/3 and 8/3.
 THRESHOLDS = [2.0, 2.33, 2.5, 2.67, 3.0]
 SUB_SCORES = ["confidence", "soundness", "presentation", "informativeness"]
+# Papers with an average at or above this are listed individually (top_papers.json);
+# the site lets readers raise the cut-off (3.33, 3.67, 4).
+TOP_MIN = 3.0
 
 
 def r2(x):
@@ -105,6 +108,54 @@ def load_ref():
     return {a: v["accept_rate"] for a, v in ref["areas"].items()}, ref.get("overall", {}).get("accept_rate")
 
 
+def write_top_papers(out_dir, active, fetched_at, as_of_et):
+    """List every active paper with average >= TOP_MIN, flagging movement since the last snapshot."""
+    path = out_dir / "top_papers.json"
+    prev = None  # id -> average in the previous snapshot's list
+    if path.exists():
+        old = json.loads(path.read_text())
+        if old.get("fetched_at_utc") != fetched_at:
+            prev = {p["id"]: p["avg"] for p in old["papers"]}
+            prev_as_of = old.get("as_of_et")
+        elif old.get("compared_to_previous"):
+            # Rebuilding the same snapshot: keep the comparison that was made the first time.
+            prev = {p["id"]: p.get("prev", p["avg"]) for p in old["papers"] if not p.get("new")}
+            prev_as_of = old.get("previous_as_of_et")
+    areas = sorted({p["area"] for p in active}, key=lambda a: AREA_SHORT.get(a, a))
+    area_idx = {a: i for i, a in enumerate(areas)}
+    top = []
+    for p in active:
+        if p["avg"] is None or r2(p["avg"]) < TOP_MIN:
+            continue
+        avg = r2(p["avg"])
+        rec = {
+            "n": p["number"],
+            "id": p["id"],
+            "t": p["title"] or f"Submission {p['number']}",
+            "a": area_idx[p["area"]],
+            "r": sorted(p["ratings"], reverse=True),
+            "avg": avg,
+        }
+        if prev is not None:
+            if p["id"] not in prev:
+                rec["new"] = True  # was below the cut-off (or not yet reviewed) last snapshot
+            elif prev[p["id"]] != avg:
+                rec["prev"] = prev[p["id"]]
+        top.append(rec)
+    top.sort(key=lambda r: (-r["avg"], -len(r["r"]), r["n"]))
+    out = {
+        "fetched_at_utc": fetched_at,
+        "as_of_et": as_of_et,
+        "min_avg": TOP_MIN,
+        "compared_to_previous": prev is not None,
+        "previous_as_of_et": prev_as_of if prev is not None else None,
+        "areas": [AREA_SHORT.get(a, a) for a in areas],
+        "papers": top,
+    }
+    path.write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False))
+    print(f"top_papers.json: {len(top):,} papers with average >= {TOP_MIN}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "latest.json"))
@@ -128,6 +179,9 @@ def main():
         revs = [r for r in p["reviews"] if r.get("rating") is not None]
         ratings = [r["rating"] for r in revs]
         rec = {
+            "id": p.get("id"),
+            "number": p.get("number"),
+            "title": p.get("title"),
             "area": p.get("area") or "(none)",
             "ratings": ratings,
             "avg": sum(ratings) / len(ratings) if ratings else None,
@@ -179,6 +233,8 @@ def main():
     }
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "stats.json").write_text(json.dumps(stats, indent=1))
+
+    write_top_papers(out_dir, active, raw["fetched_at"], as_of_et)
 
     hist_path = out_dir / "history.json"
     history = json.loads(hist_path.read_text()) if hist_path.exists() else []
