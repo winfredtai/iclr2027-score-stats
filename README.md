@@ -6,13 +6,14 @@ A static site showing how ICLR 2027 review scores are distributed overall and wi
 
 ## What's on the page
 
-- **Score lookup:** enter an average rating and pick an area to get "Top x%" in that area and across all areas.
+- **Primary-area picker:** a selector pinned to the top of the page. "All areas" shows the complete view. Picking an area shows all areas (left) next to that area (right) in every chart, trims each table to the "All areas" row plus that area, and filters the paper list. The choice is kept in the URL (`?area=…`).
+- **Score lookup:** enter an average rating to get "Top x%" in the selected area and across all areas.
 - **Overall distribution:** a histogram of per-paper average ratings and the mix of individual 1–4 ratings.
 - **Area comparison table:** share of papers with an average ≥ 2.00 / 2.33 / 2.50 / 2.67 / 3.00, shaded against all areas, plus the ICLR 2026 acceptance rate for each area.
 - **Rating mix by area:** stacked bars showing each area's split of ratings 1–4.
-- **Per-area histograms:** one-third-wide intervals (2.00–2.32, 2.33–2.66, …) on a shared y-axis.
+- **Per-area histograms:** one-third-wide intervals (2.00–2.32, 2.33–2.66, …) on a shared y-axis. Shown only in the complete view.
 - **Score-interval table:** percent or counts for every interval and area.
-- **High-scoring papers:** a list of every active paper with an average ≥ 3.00, saved with each refresh. You can filter it by cut-off (3.00 / 3.33 / 3.50 / 3.67 / 4.00), area, and title search. Titles link to OpenReview, the list can be downloaded as CSV, and it shows changes since the previous refresh.
+- **High-scoring papers:** a list of every active paper with an average ≥ 3.00, saved with each refresh. You can filter it by cut-off (3.00 / 3.33 / 3.50 / 3.67 / 4.00) and title search; the area comes from the page-wide picker. Titles link to OpenReview, the list can be downloaded as CSV, and it shows changes since the previous refresh.
 - **Snapshot history:** one row per refresh, to follow score changes through the rebuttal.
 
 ## How to refresh the data
