@@ -1,6 +1,6 @@
 # ICLR 2027 Review Score Statistics
 
-A static site showing how ICLR 2027 review scores are distributed overall and within each of the 21 primary areas. The data is scraped from public OpenReview reviews and refreshed by hand during the rebuttal period.
+A static site showing how ICLR 2027 review scores are distributed overall and within each of the 21 primary areas. The data is scraped from public OpenReview reviews and refreshed by hand throughout the review process, first the rebuttal and now the reviewer–AC discussion.
 
 **Site:** https://winfredtai.github.io/iclr2027-score-stats/
 
@@ -14,7 +14,7 @@ A static site showing how ICLR 2027 review scores are distributed overall and wi
 - **Per-area histograms:** one-third-wide intervals (2.00–2.32, 2.33–2.66, …) on a shared y-axis. Shown only in the complete view.
 - **Score-interval table:** percent or counts for every interval and area.
 - **High-scoring papers:** a list of every active paper with an average ≥ 3.00, saved with each refresh. You can filter it by cut-off (3.00 / 3.33 / 3.50 / 3.67 / 4.00) and title search; the area comes from the page-wide picker. Titles link to OpenReview, the list can be downloaded as CSV, and it shows changes since the previous refresh.
-- **Snapshot history:** one row per refresh, to follow score changes through the rebuttal.
+- **Snapshot history:** one row per refresh, to follow score changes through the rebuttal and the reviewer–AC discussion.
 
 ## How to refresh the data
 
