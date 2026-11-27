@@ -18,7 +18,7 @@
       <a href="#overall">Overall</a>
       <a href="#compare">Area comparison</a>
       <a href="#mix">Rating mix</a>
-      <a href="#areas">Per-area histograms</a>
+      <a href="#areas" id="toc-areas">Per-area histograms</a>
       <a href="#intervals">Score intervals</a>
       <a href="#top-papers">High-scoring papers</a>
       <a href="#history">Snapshot history</a>
@@ -27,16 +27,20 @@
     <div class="tiles" id="tiles"></div>
   </header>
 
+  <div class="areabar" id="areabar">
+    <label for="area-sel">Primary area</label>
+    <select id="area-sel"></select>
+    <button type="button" id="area-reset" class="btn" hidden>Show all areas</button>
+    <span class="hint" id="area-hint">Pick an area to compare it with all areas, side by side, in every section.</span>
+  </div>
+
   <section id="lookup" class="lookup">
     <h2>Where does a score rank?</h2>
-    <p class="sub">Enter a paper's average rating to see what share of papers in the area have the same or a higher average.</p>
+    <p class="sub">Enter a paper's average rating to see what share of papers in the selected area have the same or a higher average.</p>
     <div class="card">
       <form id="lookup-form" onsubmit="return false">
         <label>Average rating (1–4)
           <input id="lk-score" type="number" min="1" max="4" step="0.01" value="2.50" inputmode="decimal">
-        </label>
-        <label>Primary area
-          <select id="lk-area"></select>
         </label>
       </form>
       <div class="result" id="lk-result" aria-live="polite"></div>
@@ -45,24 +49,13 @@
 
   <section id="overall">
     <h2>Overall distribution</h2>
-    <p class="sub">All active submissions with at least one review, across all primary areas.</p>
-    <div class="grid2">
-      <div class="card panel">
-        <h3>Average rating per paper</h3>
-        <div class="meta" id="overall-meta"></div>
-        <div class="chart" id="overall-hist"></div>
-      </div>
-      <div class="card panel">
-        <h3>Individual review ratings</h3>
-        <div class="meta" id="ratings-meta"></div>
-        <div class="chart" id="ratings-bar"></div>
-      </div>
-    </div>
+    <p class="sub" id="overall-sub">All active submissions with at least one review, across all primary areas.</p>
+    <div id="overall-body"></div>
   </section>
 
   <section id="compare">
     <h2>Area comparison</h2>
-    <p class="sub">Share of each area's papers with an average rating ≥ the column value. Areas are sorted by mean average, high to low.</p>
+    <p class="sub">Share of each area's papers with an average rating ≥ the column value. Areas are sorted by mean average, high to low. Shading compares each area with all areas.</p>
     <div class="legend">
       <span><span class="sw" style="background: rgba(var(--pos), .45)"></span>Higher share than all areas (area scores higher)</span>
       <span><span class="sw" style="background: rgba(var(--neg), .45)"></span>Lower share than all areas (area scores lower)</span>
@@ -110,9 +103,6 @@
             <option value="3.67">≥ 3.67</option>
             <option value="4.00">= 4.00</option>
           </select>
-        </label>
-        <label>Primary area
-          <select id="tp-area"><option value="-1">All areas</option></select>
         </label>
         <label>Search titles
           <input id="tp-q" type="search" placeholder="e.g. diffusion" class="wide">

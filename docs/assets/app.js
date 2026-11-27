@@ -9,6 +9,9 @@
   const pctSmart = (x) => (x == null ? "–" : x >= 0.1 ? (x * 100).toFixed(0) + "%" : (x * 100).toFixed(1) + "%");
   const f2 = (x) => (x == null ? "–" : x.toFixed(2));
 
+  // Abstract registrations for ICLR 2027. Not available from the scraped data, so it is set by hand.
+  const ABSTRACT_SUBMISSIONS = 62288;
+
   let S = null; // stats
   let H = []; // history
 
@@ -77,11 +80,20 @@
   }
   const allGroup = () => S.groups[0];
 
+  // ---------- Selected area (global) ----------
+  // sel = index into S.groups; 0 = "All areas" (complete view).
+  let sel = 0;
+  const selGroup = () => S.groups[sel];
+  const isAll = () => sel === 0;
+  // Rows for tables / mix chart: every area in the complete view, otherwise only "All areas" + the selected area.
+  const visibleGroups = () => (isAll() ? S.groups : [S.groups[0], S.groups[sel]]);
+  const areaLabel = (g) => (g.key === "all" ? "All areas" : g.name);
+
   // ---------- Header tiles ----------
   function renderTiles() {
     const c = S.counts, g = allGroup();
     const tiles = [
-      ["Papers with reviews", fmtInt(g.n_reviewed), `${fmtInt(c.active)} active submissions`],
+      ["Active papers", fmtInt(c.active), `${fmtInt(ABSTRACT_SUBMISSIONS)} abstract submissions`],
       ["Reviews", fmtInt(g.n_reviews), `${(g.n_reviews / g.n_reviewed).toFixed(2)} per paper on average`],
       ["Mean paper average", f2(g.mean), `median ${f2(g.median)} · IQR ${f2(g.q1)}–${f2(g.q3)}`],
       ["Average ≥ 2.5", pct(g.share_ge["2.50"]), `≥ 3.0: ${pct(g.share_ge["3.00"])}`],
@@ -93,17 +105,52 @@
   }
 
   // ---------- Lookup ----------
-  function renderLookupControls() {
-    const sel = document.getElementById("lk-area");
-    sel.replaceChildren(...S.groups.map((g, i) => el("option", { value: String(i), text: g.key === "all" ? "All areas" : g.name })));
-    const inp = document.getElementById("lk-score");
-    inp.addEventListener("input", renderLookup);
-    sel.addEventListener("change", renderLookup);
+  function renderAreaControls() {
+    const box = document.getElementById("area-sel");
+    const areas = S.groups.map((g, i) => [g, i]).slice(1).sort((a, b) => a[0].name.localeCompare(b[0].name));
+    box.replaceChildren(el("option", { value: "0", text: "All areas (complete view)" }),
+      ...areas.map(([g, i]) => el("option", { value: String(i), text: g.name, title: g.full })));
+    // Restore ?area=<key> from the URL so a filtered view can be shared.
+    const key = new URLSearchParams(location.search).get("area");
+    const i = key ? S.groups.findIndex((g) => g.key === key) : -1;
+    sel = i > 0 ? i : 0;
+    box.value = String(sel);
+    box.addEventListener("change", () => setArea(parseInt(box.value, 10) || 0));
+    document.getElementById("area-reset").addEventListener("click", () => setArea(0));
+    document.getElementById("lk-score").addEventListener("input", renderLookup);
+    syncAreaBar();
+  }
+  function syncAreaBar() {
+    const g = selGroup();
+    document.getElementById("area-sel").value = String(sel);
+    document.getElementById("areabar").classList.toggle("selected", !isAll());
+    document.getElementById("area-reset").hidden = isAll();
+    document.getElementById("area-hint").textContent = isAll()
+      ? "Pick an area to compare it with all areas, side by side, in every section."
+      : `Showing all areas (left) vs. ${g.name} (right).`;
+  }
+  function setArea(i) {
+    sel = i;
+    const url = new URL(location.href);
+    if (isAll()) url.searchParams.delete("area"); else url.searchParams.set("area", selGroup().key);
+    history.replaceState(null, "", url);
+    syncAreaBar();
+    renderAreaDependent();
+    drawResponsive();
+  }
+  function renderAreaDependent() {
+    renderLookup();
+    renderOverall();
+    renderCompare();
+    renderMix();
+    renderAreaGrid();
+    renderIntervals();
+    renderTopPapers(true);
   }
   function renderLookup() {
     const out = document.getElementById("lk-result");
     const x = parseFloat(document.getElementById("lk-score").value);
-    const g = S.groups[parseInt(document.getElementById("lk-area").value, 10) || 0];
+    const g = selGroup();
     if (!(x >= 1 && x <= 4)) { out.replaceChildren(el("p", { class: "muted", text: "Enter a value between 1 and 4." })); return; }
     const a = shareAtLeast(g, x), all = shareAtLeast(allGroup(), x);
     const xs = (Math.round(x * 100) / 100).toFixed(2);
@@ -163,7 +210,7 @@
 
     // Selective direct labels: "Top x%" above the 2.5 and 3.0 interval columns.
     // Only drawn where the interval is wide enough to hold the label without colliding.
-    if (slot >= 56) (opts.marks || []).forEach((t) => {
+    if (slot >= 50) (opts.marks || []).forEach((t) => {
       const i = S.bin_edges.findIndex((e) => Math.abs(e - t) < 1e-9);
       if (i < 0) return;
       const share = g.share_ge[t.toFixed(2)];
@@ -176,16 +223,16 @@
   }
 
   // ---------- Rating columns (4 bars, diverging colors) ----------
-  function drawRatings(container, g) {
+  function drawRatings(container, g, opts) {
     const W = Math.max(240, container.clientWidth || 300);
     const H = 220;
     const m = { l: 6, r: 6, t: 22, b: 40 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const total = g.rating_counts.reduce((a, b) => a + b, 0) || 1;
     const shares = g.rating_counts.map((c) => c / total);
-    const yMax = Math.max(...shares) * 1.08;
+    const yMax = (opts && opts.yMax) || Math.max(...shares) * 1.08;
     const slot = iw / 4, bw = Math.min(56, slot * 0.6);
-    const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Distribution of individual review ratings" });
+    const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Distribution of individual review ratings for ${g.name}` });
     s.append(svg("line", { x1: m.l, x2: W - m.r, y1: m.t + ih, y2: m.t + ih, class: "baseline" }));
     shares.forEach((sh, i) => {
       const cx = m.l + slot * i + slot / 2;
@@ -197,9 +244,48 @@
       s.append(svgText(cx, m.t + ih + 30, RATING_LABELS[i], { "text-anchor": "middle" }));
       const hit = svg("rect", { x: m.l + slot * i, y: m.t, width: slot, height: ih, class: "hit" });
       s.append(hit);
-      attachTip(hit, () => [["v", `${fmtInt(g.rating_counts[i])} reviews`], ["", `Rating ${i + 1} · ${RATING_LABELS[i]}`], ["k", `${pct(sh)} of all reviews`]]);
+      attachTip(hit, () => [["v", `${fmtInt(g.rating_counts[i])} reviews`], ["", `Rating ${i + 1} · ${RATING_LABELS[i]}`], ["k", `${pct(sh)} of reviews in ${areaLabel(g)}`]]);
     });
     container.replaceChildren(s);
+  }
+
+  // ---------- Overall distribution (complete view, or all-areas | selected-area) ----------
+  let overallDraws = [];
+  const ratingShares = (g) => { const t = g.rating_counts.reduce((a, b) => a + b, 0) || 1; return g.rating_counts.map((c) => c / t); };
+  const meanRating = (g) => g.rating_counts.reduce((a, c, i) => a + c * (i + 1), 0) / (g.n_reviews || 1);
+  function overallCard(title, g, meta, draw, tagged) {
+    const card = el("div", { class: "card panel" });
+    if (tagged) card.append(el("span", { class: "tag " + (g.key === "all" ? "all" : "area"), text: areaLabel(g), title: g.full }));
+    const chart = el("div", { class: "chart" });
+    card.append(el("h3", { text: title }), el("div", { class: "meta" }, ...meta), chart);
+    overallDraws.push(() => draw(chart));
+    return card;
+  }
+  function renderOverall() {
+    const body = document.getElementById("overall-body");
+    overallDraws = [];
+    const histMeta = (g) => [document.createTextNode(`n = ${fmtInt(g.n_reviewed)} papers · mean `), el("b", { text: f2(g.mean) }), document.createTextNode(` · median ${f2(g.median)}`)];
+    const ratMeta = (g) => [document.createTextNode(`n = ${fmtInt(g.n_reviews)} reviews · mean rating `), el("b", { text: meanRating(g).toFixed(2) })];
+    const marks = [2.0, 2.33, 2.67, 3.0];
+    if (isAll()) {
+      const g = allGroup();
+      const yMax = niceMax(Math.max(...g.hist) / g.n_reviewed);
+      document.getElementById("overall-sub").textContent = "All active submissions with at least one review, across all primary areas.";
+      body.replaceChildren(el("div", { class: "grid2" },
+        overallCard("Average rating per paper", g, histMeta(g), (c) => drawHist(c, g, { yMax, height: 220, marks }), false),
+        overallCard("Individual review ratings", g, ratMeta(g), (c) => drawRatings(c, g), false)));
+      return;
+    }
+    const pair = [allGroup(), selGroup()];
+    // Shared y-axes so the two panels in each row can be compared directly.
+    const hMax = niceMax(Math.max(...pair.map((g) => Math.max(...g.hist) / (g.n_reviewed || 1))));
+    const rMax = Math.max(...pair.flatMap(ratingShares)) * 1.08;
+    document.getElementById("overall-sub").textContent = `All areas (left) vs. ${selGroup().name} (right). Each row shares its y-axis.`;
+    body.replaceChildren(
+      el("div", { class: "grid-cmp" }, ...pair.map((g) =>
+        overallCard("Average rating per paper", g, histMeta(g), (c) => drawHist(c, g, { yMax: hMax, height: 220, marks }), true))),
+      el("div", { class: "grid-cmp" }, ...pair.map((g) =>
+        overallCard("Individual review ratings", g, ratMeta(g), (c) => drawRatings(c, g, { yMax: rMax }), true))));
   }
 
   // ---------- Area comparison table ----------
@@ -216,8 +302,8 @@
       el("th", { text: "Area" }), el("th", { text: "Papers" }), el("th", { text: "Mean" }), el("th", { text: "Median" }),
       ...thr.map((k) => el("th", null, el("span", { class: "thr", text: "≥ " + k }))),
       hasRef ? el("th", { text: "ICLR 2026 acc. rate" }) : null);
-    const rows = S.groups.map((g) => {
-      const tr = el("tr", g.key === "all" ? { class: "all" } : null);
+    const rows = visibleGroups().map((g) => {
+      const tr = el("tr", g.key === "all" ? { class: "all" } : !isAll() ? { class: "sel" } : null);
       const name = el("td", { class: "areaname", title: g.full });
       name.textContent = g.name;
       tr.append(name, el("td", { text: fmtInt(g.n_reviewed) }), el("td", { text: f2(g.mean) }), el("td", { text: f2(g.median) }));
@@ -248,9 +334,9 @@
       el("span", null, el("span", { class: "sw", style: `background: var(--r${i + 1})` }), document.createTextNode(`${i + 1} · ${l}`))));
     const box = document.getElementById("mix-chart");
     const kids = [el("div", { class: "head", text: "Area" }), el("div", { class: "head", text: "Share of reviews by rating" }), el("div", { class: "head mean", text: "Mean" })];
-    S.groups.forEach((g) => {
+    visibleGroups().forEach((g) => {
       const total = g.rating_counts.reduce((a, b) => a + b, 0) || 1;
-      const name = el("div", { class: "name" + (g.key === "all" ? " all" : ""), title: g.full });
+      const name = el("div", { class: "name" + (g.key === "all" ? " all" : !isAll() ? " sel" : ""), title: g.full });
       name.textContent = g.name;
       const stack = el("div", { class: "stack", role: "img" });
       stack.setAttribute("aria-label", g.name + ": " + g.rating_counts.map((c, i) => `rating ${i + 1} ${pct(c / total)}`).join(", "));
@@ -277,9 +363,13 @@
 
   // ---------- Per-area small multiples ----------
   function renderAreaGrid() {
+    // The two-panel version would repeat the "Overall distribution" histograms, so hide the section when an area is picked.
+    document.getElementById("areas").hidden = !isAll();
+    document.getElementById("toc-areas").hidden = !isAll();
+    if (!isAll()) return;
     const grid = document.getElementById("area-grid");
     const groups = S.groups.slice(1).concat([S.groups[0]]);
-    sharedYMax = niceMax(Math.max(...S.groups.map((g) => Math.max(...g.hist) / (g.n_reviewed || 1))));
+    sharedYMax = niceMax(Math.max(...groups.map((g) => Math.max(...g.hist) / (g.n_reviewed || 1))));
     grid.replaceChildren(...groups.map((g) => {
       const card = el("div", { class: "card panel" });
       const h = el("h3"); h.textContent = g.name;
@@ -298,6 +388,7 @@
     drawAreaCharts();
   }
   function drawAreaCharts() {
+    if (!isAll()) return;
     document.querySelectorAll("#area-grid .panel").forEach((card) => drawHist(card._chart, card._g, { yMax: sharedYMax, height: 170 }));
   }
 
@@ -307,8 +398,8 @@
     const nb = S.bin_edges.length - 1;
     const head = el("tr", null, el("th", { text: "Area" }), el("th", { text: "Papers" }),
       ...Array.from({ length: nb }, (_, i) => el("th", { text: binLabel(i) })));
-    const rows = S.groups.map((g) => {
-      const tr = el("tr", g.key === "all" ? { class: "all" } : null);
+    const rows = visibleGroups().map((g) => {
+      const tr = el("tr", g.key === "all" ? { class: "all" } : !isAll() ? { class: "sel" } : null);
       const name = el("td", { class: "areaname", title: g.full }); name.textContent = g.name;
       tr.append(name, el("td", { text: fmtInt(g.n_reviewed) }));
       g.hist.forEach((c, i) => {
@@ -349,7 +440,7 @@
 
   function tpFiltered() {
     const min = parseFloat(document.getElementById("tp-min").value);
-    const area = parseInt(document.getElementById("tp-area").value, 10);
+    const area = isAll() ? -1 : TP.areas.indexOf(selGroup().name);
     const q = document.getElementById("tp-q").value.trim().toLowerCase();
     return TP.papers.filter((p) => p.avg >= min - 1e-9 && (area < 0 || p.a === area) && (!q || p.t.toLowerCase().includes(q)));
   }
@@ -374,14 +465,14 @@
     if (resetPaging) tpShown = TP_PAGE;
     tpRows = tpFiltered();
     const min = document.getElementById("tp-min").value;
-    const areaSel = document.getElementById("tp-area");
-    const areaName = areaSel.value === "-1" ? "all areas" : areaSel.options[areaSel.selectedIndex].text;
+    const areaName = isAll() ? "all areas" : selGroup().name;
+    const showArea = isAll();
     const count = document.getElementById("tp-count");
     count.replaceChildren(el("b", { text: fmtInt(tpRows.length) }),
       document.createTextNode(` papers with average ${min === "4.00" ? "= 4.00" : "≥ " + min} in ${areaName}`),
       document.createTextNode(TP.compared_to_previous ? ` · change vs. ${TP.previous_as_of_et}` : ""));
 
-    const head = el("tr", null, el("th", { text: "#" }), el("th", { class: "l", text: "Title" }), el("th", { class: "l", text: "Area" }),
+    const head = el("tr", null, el("th", { text: "#" }), el("th", { class: "l", text: "Title" }), showArea ? el("th", { class: "l", text: "Area" }) : null,
       el("th", { text: "Ratings" }), el("th", { text: "Avg" }), TP.compared_to_previous ? el("th", { text: "Change" }) : null);
     const body = el("tbody");
     tpRows.slice(0, tpShown).forEach((p, i) => {
@@ -390,7 +481,7 @@
       const ratings = el("td", { class: "ratings" }, ...p.r.map((r) => el("span", { class: "chip r" + r, text: String(r) })));
       ratings.setAttribute("aria-label", "Ratings " + p.r.join(", "));
       body.append(el("tr", null, el("td", { class: "rank", text: String(i + 1) }), title,
-        el("td", { class: "area", text: TP.areas[p.a] }), ratings, el("td", { text: p.avg.toFixed(2) }), TP.compared_to_previous ? deltaCell(p) : null));
+        showArea ? el("td", { class: "area", text: TP.areas[p.a] }) : null, ratings, el("td", { text: p.avg.toFixed(2) }), TP.compared_to_previous ? deltaCell(p) : null));
     });
     document.getElementById("tp-table").replaceChildren(el("thead", null, head), body);
     const more = document.getElementById("tp-more");
@@ -404,7 +495,7 @@
     const lines = [["submission_number", "title", "primary_area", "ratings", "average", "previous_average", "openreview_url"].join(",")];
     tpRows.forEach((p) => lines.push([p.n, p.t, TP.areas[p.a], p.r.join(" "), p.avg.toFixed(2), p.prev != null ? p.prev.toFixed(2) : (p.new ? "<" + TP.min_avg.toFixed(2) : ""), forumUrl(p.id)].map(esc).join(",")));
     const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv;charset=utf-8" });
-    const a = el("a", { href: URL.createObjectURL(blob), download: `iclr2027_avg_ge_${document.getElementById("tp-min").value}.csv` });
+    const a = el("a", { href: URL.createObjectURL(blob), download: `iclr2027_avg_ge_${document.getElementById("tp-min").value}${isAll() ? "" : "_" + selGroup().name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}.csv` });
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
@@ -419,10 +510,7 @@
         return r.json();
       }).then((d) => {
         TP = d;
-        const sel = document.getElementById("tp-area");
-        TP.areas.map((name, i) => [name, i]).sort((x, y) => x[0].localeCompare(y[0]))
-          .forEach(([name, i]) => sel.append(el("option", { value: String(i), text: name })));
-        ["tp-min", "tp-area"].forEach((id) => document.getElementById(id).addEventListener("change", () => renderTopPapers(true)));
+        document.getElementById("tp-min").addEventListener("change", () => renderTopPapers(true));
         document.getElementById("tp-q").addEventListener("input", () => renderTopPapers(true));
         document.getElementById("tp-more").addEventListener("click", () => { tpShown += TP_PAGE; renderTopPapers(false); });
         document.getElementById("tp-csv").addEventListener("click", downloadTopCsv);
@@ -442,8 +530,7 @@
 
   // ---------- Main ----------
   function drawResponsive() {
-    drawHist(document.getElementById("overall-hist"), allGroup(), { yMax: niceMax(Math.max(...allGroup().hist) / allGroup().n_reviewed), height: 220, marks: [2.0, 2.33, 2.67, 3.0] });
-    drawRatings(document.getElementById("ratings-bar"), allGroup());
+    overallDraws.forEach((draw) => draw());
     drawAreaCharts();
     labelMixSegments();
   }
@@ -462,13 +549,10 @@
     }
     document.getElementById("asof").textContent = S.as_of_et;
     document.getElementById("footer-asof").textContent = `Last updated ${S.as_of_et}.`;
-    const g = allGroup();
-    document.getElementById("overall-meta").replaceChildren(document.createTextNode(`n = ${fmtInt(g.n_reviewed)} papers · mean `), el("b", { text: f2(g.mean) }), document.createTextNode(` · median ${f2(g.median)}`));
-    document.getElementById("ratings-meta").replaceChildren(document.createTextNode(`n = ${fmtInt(g.n_reviews)} reviews · mean rating `),
-      el("b", { text: (g.rating_counts.reduce((a, c, i) => a + c * (i + 1), 0) / g.n_reviews).toFixed(2) }));
     renderTiles();
-    renderLookupControls();
+    renderAreaControls();
     renderLookup();
+    renderOverall();
     renderCompare();
     renderMix();
     renderAreaGrid();
